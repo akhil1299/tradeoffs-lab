@@ -33,6 +33,19 @@ flowchart LR
     V -- 3rd rejection --> H[Fail closed:<br/>a person decides]
 ```
 
+### LangGraph graph
+
+The compiled `StateGraph` from the notebook. `route()` sends a `REJECTED` case back to the Analyst; `PASSED` and `FAILED_CLOSED` go to `END`.
+
+```mermaid
+flowchart TD
+    START([START]) --> planner
+    planner --> analyst
+    analyst --> verifier
+    verifier -. REJECTED .-> analyst
+    verifier -->|PASSED / FAILED_CLOSED| END([END])
+```
+
 The agents never call each other. They share one typed state (`CaseState`), and each agent writes only its own fields:
 
 | Field | Written by |
