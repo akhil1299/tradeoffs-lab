@@ -14,6 +14,8 @@ Most engineering portfolios show one path through one problem. That proves the p
 |---|---|---|---|
 | 01 | [Multi-Agent Dispute Triage](studies/01-multi-agent-dispute-triage) | Card fraud and dispute classification | Databricks · PySpark · Delta Lake · LangGraph · OpenAI · Pydantic |
 
+Study 01 status: the agents, verifier and graph run end to end; its forks are in progress.
+
 Planned: Model Context Protocol (MCP) tool servers · LLM evaluation harnesses · LLMOps cost and latency routing.
 
 ## How each study is built

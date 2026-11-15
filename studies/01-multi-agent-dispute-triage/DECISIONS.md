@@ -2,7 +2,7 @@
 
 What I chose, why, and what I rejected.
 
-Each entry names the alternative, not just the choice. Where an entry has a **switch** line, that is the condition under which the other option becomes correct — the alternatives themselves are implemented in `forks.ipynb`.
+Each entry names the alternative, not just the choice. Where an entry has a **switch** line, that is the condition under which the other option becomes correct — the alternatives are being built as running code in `forks.ipynb` (in progress).
 
 ## Data and features
 
@@ -34,12 +34,12 @@ Rejected: free-text handoff. Unparseable, untestable, no contract to violate.
 
 ### Pydantic for LLM output, TypedDict for the state
 The LLM is where bad data enters, so its output gets a Pydantic model: the provider enforces the schema (`strict=True`) and Pydantic validates again in Python. The state is written by my own code, so a TypedDict is enough.
-Rejected: a hand-written JSON Schema dict for the main path. It sends the same schema but skips validation in Python. Implemented as **fork 01**.
+Rejected: a hand-written JSON Schema dict for the main path. It sends the same schema but skips validation in Python. Planned as **fork 01**.
 **Switch:** a provider or framework with no Pydantic support, or a schema generated at runtime rather than declared.
 
 ### Structured output, not raw call and parse
 `with_structured_output(..., strict=True)` makes the provider enforce the shape, so there is no JSON to repair and no parse step that can throw.
-Rejected: prompting for JSON and calling `json.loads`. Implemented as **fork 02** to measure how often it actually breaks.
+Rejected: prompting for JSON and calling `json.loads`. Planned as **fork 02**, to measure how often it actually breaks.
 **Switch:** a model or endpoint without structured-output support — then the parse path needs its own retry-with-error-in-prompt loop.
 
 ### Field descriptions are per-field instructions
@@ -75,6 +75,18 @@ Possible optimisation: send only the flags in `checks` plus amount, merchant and
 The big model costs roughly 8× more per call. Easy cases on the first attempt get the small one; hard cases and every retry get the big one.
 Rejected: always big (pays for easy cases) and always small (fails the hard ones). The cost-versus-accuracy numbers that justify this get measured in the routing block, not assumed here.
 
-### Verifier is plain Python, not an LLM *(in progress)*
+### Verifier is plain Python, not an LLM
 An LLM checking an LLM is a second thing that can be wrong, and when it fails you get no signal about which one broke. Deterministic checks are cheap, fast and auditable, which matters in a regulated process.
 Rejected: LLM-as-judge on every verdict. Kept for reason quality only, in evaluation.
+
+### Literal names the policy; the Verifier checks it fired
+`Literal` stops the model inventing a policy name, but it cannot see the transaction. A real policy can still be cited for a case where its flag is False, so the Verifier looks up each cited policy's flag through `POLICY_FLAGS` and rejects it if the flag is False.
+Rejected: trusting the enum alone.
+
+### The Verifier traces into MLflow
+LLM calls are traced by `mlflow.langchain.autolog()`. The Verifier is plain Python, so it is added to the same trace with `@mlflow.trace`, and one trace shows every attempt and every rejection reason.
+Rejected: LangSmith's `@traceable`. A second tracing tool with its own key, for the same job.
+
+### The router fails loudly on an unknown status
+`route()` handles `PASSED`, `REJECTED` and `FAILED_CLOSED` and raises an error on anything else.
+Rejected: a default branch. Guessing a route hides a bug in the Verifier.

@@ -27,7 +27,7 @@ Almost all of the cost is input tokens — prompt plus schema. The answer itself
 flowchart LR
     S[Case start<br/>txn + customer message] --> P[Planner<br/>LLM, small model]
     P --> A[Analyst<br/>LLM, small or big model]
-    A --> V[Verifier<br/>plain Python<br/><i>in progress</i>]
+    A --> V[Verifier<br/>plain Python]
     V -- rejected, feedback --> A
     V -- passed --> E[Done]
     V -- 3rd rejection --> H[Fail closed:<br/>a person decides]
@@ -45,13 +45,14 @@ The agents never call each other. They share one typed state (`CaseState`), and 
 ## What's here so far
 
 - `generate_transactions.py` → seeded generator: 2,008,000 transactions, 50,000 cards, 30 days, 2,000 planted fraud bursts
-- `fraud_triage_agent.ipynb` → features, state contract, agents, tests
+- `fraud_triage_agent.ipynb` → features, state contract, agents, router, graph, end-to-end runs
 - PySpark features → `txn_count_last_10m` and `amt_sum_last_10m` over a 600-second range window per card, `prev_country` via `lag`, one flag per policy, `rules_fired` (0–4)
 - Delta feature store → features materialised once to `card_features`; agent lookups are key reads
 - `call_llm()` → the single metered entry point: step, model, latency and tokens into `CALL_LOG`; structured output via Pydantic with `strict=True`
 - Planner → judges whether the customer's story agrees with the data and which policies apply; code sets difficulty
 - Analyst → decides `TRUE_FRAUD` / `FRIENDLY_FRAUD` / `BILLING_ERROR` / `NEEDS_INFO` with reasons, cited policies and exact quotes
-- `forks.ipynb` → the strongest alternative implementation at each decision point
+- Verifier → plain Python: cited policies must have fired, quotes must appear in the message, `TRUE_FRAUD` must cite a policy; fails closed after 3 rejections
+- Router and graph → `route()` reads the Verifier's `status`; a LangGraph `StateGraph` runs Planner → Analyst → Verifier with a conditional retry edge
 - `DECISIONS.md` → every design decision with what was rejected and what would change the choice
 
 ## Why the window includes the current row
@@ -76,9 +77,9 @@ The verifier checks facts: every cited policy must have actually fired in the fe
 
 What it cannot check is whether the *reasoning* is any good. A verdict can cite a real policy, quote the message accurately, and still reach a poor conclusion. That gap is real and deliberate: reason quality belongs in evaluation with an LLM judge and a measured judge error rate, not in the production gate.
 
-## Forks: the alternatives
+## Forks: the alternatives (in progress)
 
-`forks.ipynb` holds the strongest **alternative** at each decision point, under the same input and output contract as the chosen path. Read with `DECISIONS.md` it shows not only what was built but what the option space was, and what would change the choice.
+Each decision point gets its strongest **alternative** as running code in `forks.ipynb`, under the same input and output contract as the chosen path. Read with `DECISIONS.md` it shows not only what was built but what the option space was, and what would change the choice. The first forks planned:
 
 | Fork | Chosen | Alternative | Switch when |
 |---|---|---|---|
@@ -103,8 +104,9 @@ The full list, with what was rejected, is in [DECISIONS.md](DECISIONS.md). The m
 - [x] State contract
 - [x] Planner
 - [x] Analyst
-- [ ] Verifier: cited policies must have fired, quotes must appear in the message, fail closed after 3 attempts
-- [ ] LangGraph wiring with a conditional retry edge
+- [x] Verifier: cited policies must have fired, quotes must appear in the message, fail closed after 3 attempts
+- [x] LangGraph wiring with a conditional retry edge
+- [ ] Forks: the strongest alternative at each decision point, as running code
 - [ ] Model routing: cost per run, share escalated, accuracy delta against always-big
 - [ ] Memory: card history as episodic memory, measured on and off
 - [ ] Second topology (supervisor) compared with the first on cost, latency and accuracy
@@ -117,8 +119,7 @@ These files are the study at `studies/01-multi-agent-dispute-triage`.
 
 | File | What |
 |---|---|
-| `fraud_triage_agent.ipynb` | The notebook: features, state, agents, tests |
-| `forks.ipynb` | The alternative implementation at each decision point |
+| `fraud_triage_agent.ipynb` | The notebook: features, state, agents, router, graph, end-to-end runs |
 | `generate_transactions.py` | Seeded data generator (Databricks notebook source) |
 | `sample_transactions_10k.csv` | ~10,000-row sample; the full table is rebuilt by the generator |
 | `DECISIONS.md` | Design decisions: chosen, why, rejected |
