@@ -24,14 +24,14 @@ Three files carry the method. They are the point of the repository.
 
 **`DECISIONS.md`** — every design decision with three parts: what was chosen, what was rejected, and the **switch condition** — the circumstance under which the rejected option becomes the right one. A decision without a switch condition is an opinion; with one, it's engineering.
 
-**`forks.py`** — the rejected alternatives as executable code, taking the same input and returning the same output as the chosen path. Only the internals differ. Reading it alongside `DECISIONS.md` shows the option space, not just the choice.
+**`forks.ipynb`** — the rejected alternatives as executable code, taking the same input and returning the same output as the chosen path. Only the internals differ. Reading it alongside `DECISIONS.md` shows the option space, not just the choice.
 
 ## Why this structure
 
 Three questions come up in every serious technical conversation about a system:
 
 - *Why did you build it this way?* — answered by `DECISIONS.md`
-- *What else could you have done?* — answered by `forks.py`
+- *What else could you have done?* — answered by `forks.ipynb`
 - *When would you choose differently?* — answered by the switch conditions
 
 Writing the answers while the reasoning is fresh produces better engineering than reconstructing them later, and it leaves a repository that can be read by someone who wasn't there.

@@ -2,7 +2,7 @@
 
 What I chose, why, and what I rejected.
 
-Each entry names the alternative, not just the choice. Where an entry has a **switch** line, that is the condition under which the other option becomes correct — the alternatives themselves are implemented in `forks.py`.
+Each entry names the alternative, not just the choice. Where an entry has a **switch** line, that is the condition under which the other option becomes correct — the alternatives themselves are implemented in `forks.ipynb`.
 
 ## Data and features
 

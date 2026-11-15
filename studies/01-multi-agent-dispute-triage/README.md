@@ -51,7 +51,7 @@ The agents never call each other. They share one typed state (`CaseState`), and 
 - `call_llm()` → the single metered entry point: step, model, latency and tokens into `CALL_LOG`; structured output via Pydantic with `strict=True`
 - Planner → judges whether the customer's story agrees with the data and which policies apply; code sets difficulty
 - Analyst → decides `TRUE_FRAUD` / `FRIENDLY_FRAUD` / `BILLING_ERROR` / `NEEDS_INFO` with reasons, cited policies and exact quotes
-- `forks.py` → the strongest alternative implementation at each decision point
+- `forks.ipynb` → the strongest alternative implementation at each decision point
 - `DECISIONS.md` → every design decision with what was rejected and what would change the choice
 
 ## Why the window includes the current row
@@ -78,7 +78,7 @@ What it cannot check is whether the *reasoning* is any good. A verdict can cite 
 
 ## Forks: the alternatives
 
-`forks.py` holds the strongest **alternative** at each decision point, under the same input and output contract as the chosen path. Read with `DECISIONS.md` it shows not only what was built but what the option space was, and what would change the choice.
+`forks.ipynb` holds the strongest **alternative** at each decision point, under the same input and output contract as the chosen path. Read with `DECISIONS.md` it shows not only what was built but what the option space was, and what would change the choice.
 
 | Fork | Chosen | Alternative | Switch when |
 |---|---|---|---|
@@ -118,7 +118,7 @@ These files are the study at `studies/01-multi-agent-dispute-triage`.
 | File | What |
 |---|---|
 | `fraud_triage_agent.ipynb` | The notebook: features, state, agents, tests |
-| `forks.py` | The alternative implementation at each decision point |
+| `forks.ipynb` | The alternative implementation at each decision point |
 | `generate_transactions.py` | Seeded data generator (Databricks notebook source) |
 | `sample_transactions_10k.csv` | ~10,000-row sample; the full table is rebuilt by the generator |
 | `DECISIONS.md` | Design decisions: chosen, why, rejected |
