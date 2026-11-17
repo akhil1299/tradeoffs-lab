@@ -90,3 +90,9 @@ Rejected: LangSmith's `@traceable`. A second tracing tool with its own key, for 
 ### The router fails loudly on an unknown status
 `route()` handles `PASSED`, `REJECTED` and `FAILED_CLOSED` and raises an error on anything else.
 Rejected: a default branch. Guessing a route hides a bug in the Verifier.
+
+### Retry loop proved by fault injection
+The real cases all passed on the first try, so the reject → retry edge had never run. A stand-in Analyst returns a known-wrong verdict for the first N attempts, then hands over to the real one. Same wiring and node names as the real graph; deterministic; no production code changed.
+Result: N=1 → PASSED after 1 rejection, retry on gpt-4.1 with the feedback in the prompt. N=3 → FAILED_CLOSED after 3 rejections, and the real Analyst never runs.
+Rejected: a tricky message that might fool the model (not repeatable); mocking call_llm (changes the metered wrapper).
+**Switch:** a build_app(analyst_node) factory once there are 3+ test graphs; pytest when this leaves the notebook.

@@ -46,6 +46,8 @@ flowchart TD
     verifier -->|PASSED / FAILED_CLOSED| END([END])
 ```
 
+Both exits are exercised in the notebook by fault injection: one bad verdict → rejected, retried on gpt-4.1 with the Verifier's feedback → `PASSED`; three bad verdicts → `FAILED_CLOSED`.
+
 The agents never call each other. They share one typed state (`CaseState`), and each agent writes only its own fields:
 
 | Field | Written by |
@@ -66,6 +68,7 @@ The agents never call each other. They share one typed state (`CaseState`), and 
 - Analyst → decides `TRUE_FRAUD` / `FRIENDLY_FRAUD` / `BILLING_ERROR` / `NEEDS_INFO` with reasons, cited policies and exact quotes
 - Verifier → plain Python: cited policies must have fired, quotes must appear in the message, `TRUE_FRAUD` must cite a policy; fails closed after 3 rejections
 - Router and graph → `route()` reads the Verifier's `status`; a LangGraph `StateGraph` runs Planner → Analyst → Verifier with a conditional retry edge
+- Retry loop (fault injection) → a stand-in Analyst returns a known-wrong verdict for N attempts; N=1 recovers to `PASSED`, N=3 hits `FAILED_CLOSED`
 - `DECISIONS.md` → every design decision with what was rejected and what would change the choice
 
 ## Why the window includes the current row
@@ -119,7 +122,8 @@ The full list, with what was rejected, is in [DECISIONS.md](DECISIONS.md). The m
 - [x] Analyst
 - [x] Verifier: cited policies must have fired, quotes must appear in the message, fail closed after 3 attempts
 - [x] LangGraph wiring with a conditional retry edge
-- [ ] Forks: the strongest alternative at each decision point, as running code
+- [x] Retry and fail-closed paths proved by fault injection
+- [ ] Forks: the strongest alternative at each decision point, as running code (`forks.py`)
 - [ ] Model routing: cost per run, share escalated, accuracy delta against always-big
 - [ ] Memory: card history as episodic memory, measured on and off
 - [ ] Second topology (supervisor) compared with the first on cost, latency and accuracy
@@ -132,7 +136,7 @@ These files are the study at `studies/01-multi-agent-dispute-triage`.
 
 | File | What |
 |---|---|
-| `fraud_triage_agent.ipynb` | The notebook: features, state, agents, router, graph, end-to-end runs |
+| `fraud_triage_agent.ipynb` | The notebook: features, state, agents, router, graph, retry/fail-closed fault injection, end-to-end runs |
 | `generate_transactions.py` | Seeded data generator (Databricks notebook source) |
 | `sample_transactions_10k.csv` | ~10,000-row sample; the full table is rebuilt by the generator |
 | `DECISIONS.md` | Design decisions: chosen, why, rejected |
